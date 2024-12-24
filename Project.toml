@@ -1,0 +1,8 @@
+[deps]
+CitableBase = "d6f014bd-995c-41bd-9893-703339864534"
+CitableCorpus = "cf5ac11a-93ef-4a1a-97a3-f6af101603b5"
+CitableText = "41e66566-473b-49d4-85b7-da83b66615d8"
+LatinOrthography = "1e3032c9-fa1e-4efb-a2df-a06f238f6146"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+Orthography = "0b4c9448-09b0-4e78-95ea-3eb3328be36d"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
