@@ -119,13 +119,22 @@ menuvocab = filter(wd -> length(wd) > 2, vocab)
 if ! isempty(bkey)
 	md"""
 	
-> *Vocabulary help*
+##  Vocabulary help from ChatGPT
 
 
-$(@bind word Select(vcat([""], menuvocab)))
+*Select a word from this passage*: $(@bind word Select(vcat([""], menuvocab)))
 
 """
 end
+
+# ╔═╡ 4fef591c-ce1c-4e3c-bf81-6f9f4007c27d
+isempty(bkey) || isempty(word) ? nothing : "### ChaptGPT: dictionary form" |> Markdown.parse
+
+# ╔═╡ 2d716e74-b079-419a-a088-40f1375b08e3
+isempty(bkey) || isempty(word) ? nothing : "### ChaptGPT: summary of Lewis-Short article" |> Markdown.parse
+
+# ╔═╡ b6e22dc3-8614-41e8-987c-a72635f3d606
+isempty(bkey) || isempty(word) ? nothing : md"""*See full article*: $(@bind seefull CheckBox())"""
 
 # ╔═╡ da3d1c36-0aaa-4c3f-9aaa-fa497c80159c
 md"""> ## Lewis-Short"""
@@ -149,16 +158,9 @@ ls = getls()
 
 # ╔═╡ 30651c17-56ca-496e-ad7b-f29e285bc6b5
 function articlesforlemma(lemma, lexicon)
-	re = Regex("^$(lemma)[0-9]*")
-	matchingarticles = filter(tupl -> startswith(tupl.key, re), lexicon)
-    if length(matchingarticles) == 1
-		matchingarticles[1]
-	elseif length(matchingarticles) > 1
-        @warn("Matched multiple articles $(lemma).")
-	else
-		@warn("No matches for $(lemma).")
-		nothing
-	end
+	re = Regex("^$(lemma)[0-9]")
+	matchingarticles = filter(tupl -> tupl.key == lemma || occursin(re, tupl.key), lexicon)
+ 	
 end
 
 # ╔═╡ e27c5565-ef3e-4549-90b8-143bcdf94535
@@ -210,11 +212,35 @@ end
 md"""> ## Lemmatization"""
 
 # ╔═╡ 57610198-1d2e-4835-a2d6-245bd03956ea
-lemmaprompt = "I'm studying Latin. Can you help me find the dictionary form I would use to look up $(word)? Please answer with a single line of delimited text; the word should be in the first column, the dictionary form in the second column, and the part of speech in the third."
+lemmaprompt = "I'm studying Latin. Can you help me find the dictionary form I would use to look up $(word)? I'm looking for the single dictionary headword that i would use find the article in a dictionary.Please answer with a single line of delimited text; the word should be in the first column, the dictionary form in the second column, and the part of speech in the third."
 
 
 # ╔═╡ f8fc2de2-df7d-446a-9ace-cb8d6eded4ee
 (form, lemma, pos) = isempty(bkey) || isempty(word) ? (nothing, nothing, nothing) :  strip.(split(asksuarez(lemmaprompt, bkey), "|"))
+
+# ╔═╡ 642307c3-b7e1-4973-ae93-655fee8494ea
+isempty(bkey) || isempty(word) ? nothing : md"### Full Lewis-Short article for *$(lemma)*"
+
+# ╔═╡ 265a56ec-660d-4adf-9689-b424cd96a9a6
+	articlelist = articlesforlemma(lemma, ls)
+
+# ╔═╡ a4c5bcb4-0e6f-4b9a-b21d-10063ebdedd0
+article = if length(articlelist) == 1
+	articlelist[1]
+elseif isempty(articlelist)
+	@warn("No articles matched lemma $(lemma)")
+	nothing
+else
+	@warn("multiple articles matched $(lemma)")
+	nothing
+end
+
+# ╔═╡ a3897469-79e0-4ce8-9256-d38da1c33a88
+if isempty(bkey) || isempty(word) 
+	nothing  
+elseif seefull && ! isnothing(article)
+	article.entry |> Markdown.parse
+end
 
 # ╔═╡ 93e42f7a-59bf-4721-9e8c-5b4c89cfb9d4
 """Format markdown display of lemma.
@@ -237,17 +263,33 @@ Please format the reply in a SINGLE line of delimited text, using the pipe chara
 # ╔═╡ f873fef0-6850-4f91-a5cd-9583e1903e5f
 function lexiconsummary()
 	
-	article = articlesforlemma(lemma, ls)
-	isnothing(article) ? "Couldn't find a unique dictionary entry for $(lemma)" : rawlines = replace(asksuarez(string(lexiconprompt, article), bkey), "plaintext\n" => "")
-	raw = filter(ln -> occursin("|", ln), split(rawlines, "\n"))[1]
-	(lexpos, morph, def) = strip.(split(raw, "|"))
 
+	if isempty(articlelist) 
+		"No articles matched *$(lemma)*."
+	elseif length(articlelist) > 1
+		keys = map(tpl -> string("- ", tpl.key), articlelist)
+		"""Couldn't find a unique dictionary entry for $(lemma): 
+		
+$(join(keys, "\n"))
+		
+		""" 
+	else
+		rawlines = replace(asksuarez(string(lexiconprompt, article), bkey), "plaintext\n" => "")
+		raw = filter(ln -> occursin("|", ln), split(rawlines, "\n"))[end]
+		(lexpos, morph, def) = strip.(split(raw, "|"))
+	msg = """	
 	
+**Morphology** ($(pos)): $(morph)
+
+**Definition**: *$(def)*
+	
+"""	
+	end
 	
 end
 
-# ╔═╡ b5a4dabe-d479-4c03-8ea7-74dbb0611f0d
-lexiconsummary()
+# ╔═╡ a1a9b3b2-d1bc-4355-a8fe-6f69da1fb7bc
+isempty(bkey) || isempty(word) ? nothing : lexiconsummary() |> Markdown.parse
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -977,7 +1019,13 @@ version = "17.4.0+2"
 # ╟─0497d9b1-aae5-4435-afd1-1d5e85a1d400
 # ╟─46c23333-41e1-48b2-8945-bcf959f211a8
 # ╟─16c63ac8-f0ad-4c49-b0ac-590063e6c4e1
+# ╟─4fef591c-ce1c-4e3c-bf81-6f9f4007c27d
 # ╟─bda730a0-c842-4936-8bbc-453ffb702b3d
+# ╟─2d716e74-b079-419a-a088-40f1375b08e3
+# ╟─a1a9b3b2-d1bc-4355-a8fe-6f69da1fb7bc
+# ╟─642307c3-b7e1-4973-ae93-655fee8494ea
+# ╟─b6e22dc3-8614-41e8-987c-a72635f3d606
+# ╟─a3897469-79e0-4ce8-9256-d38da1c33a88
 # ╟─4b5f9c3a-295b-4928-a7a7-bb4a5bbb4d3c
 # ╟─c1ed51dd-0ea4-467d-8cce-b0844b4d0e7d
 # ╟─00c954fe-032a-4f41-ae1c-0b5e1eefe861
@@ -996,17 +1044,18 @@ version = "17.4.0+2"
 # ╟─9a48acd0-5323-4a75-bfba-70b61be609c9
 # ╟─da3d1c36-0aaa-4c3f-9aaa-fa497c80159c
 # ╟─23e6c8ea-296d-41d5-bef6-a3465405f2cf
-# ╠═3023e951-0566-4edb-9484-87ea9ea7dbae
-# ╠═30651c17-56ca-496e-ad7b-f29e285bc6b5
+# ╟─3023e951-0566-4edb-9484-87ea9ea7dbae
+# ╟─30651c17-56ca-496e-ad7b-f29e285bc6b5
+# ╟─a4c5bcb4-0e6f-4b9a-b21d-10063ebdedd0
+# ╟─265a56ec-660d-4adf-9689-b424cd96a9a6
 # ╟─e27c5565-ef3e-4549-90b8-143bcdf94535
 # ╟─181e941a-326b-4df2-88e1-c61b820dd608
 # ╟─6ad85734-bc9f-4c1a-964a-1d66653004cd
 # ╟─1e8d226d-7efc-47b4-9680-685826f9bead
 # ╟─57610198-1d2e-4835-a2d6-245bd03956ea
-# ╠═f8fc2de2-df7d-446a-9ace-cb8d6eded4ee
+# ╟─f8fc2de2-df7d-446a-9ace-cb8d6eded4ee
 # ╟─93e42f7a-59bf-4721-9e8c-5b4c89cfb9d4
-# ╠═15a4ae72-9d04-4da5-8d8d-fd26d67fd825
-# ╠═f873fef0-6850-4f91-a5cd-9583e1903e5f
-# ╠═b5a4dabe-d479-4c03-8ea7-74dbb0611f0d
+# ╟─15a4ae72-9d04-4da5-8d8d-fd26d67fd825
+# ╟─f873fef0-6850-4f91-a5cd-9583e1903e5f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
