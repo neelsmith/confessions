@@ -31,8 +31,39 @@ tabulaeurl = "http://shot.holycross.edu/tabulae/complut-lat25-current.cex"
 parser = stringParser(tabulaeurl, UrlReader)
 
 
-vocab = keys(counts) |> collect
 
+
+nonsingletons = filter(counts) do (k,v)
+    v > 1
+end
+repeatvocab = keys(nonsingletons) |> collect
+@info("Number of repeated tokens: $(length(repeatvocab))")
+
+
+# This takes < 5 secc on my laptop at home
+@time parses = map(repeatvocab) do wrd
+    (token = wrd, parselist = parsetoken(wrd, parser))
+end
+
+fails = filter(parses) do tpl
+    isempty(tpl.parselist)
+end
+
+
+failsmsg = map(fails) do tpl
+    string(tpl.token, "|", counts[tpl.token])
+    
+end
+
+open("fails.cex", "w") do io
+
+    write(io, join(failsmsg, "\n"))
+end
+
+pwd()
+
+
+#=
 parsing = true
 results = []
 
@@ -51,3 +82,4 @@ end
 
 parsetoken("et", parser)
 
+=#
