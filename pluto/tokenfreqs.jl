@@ -4,6 +4,18 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    #! format: off
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+    #! format: on
+end
+
 # ╔═╡ 7e854268-c207-11ef-266f-c3dddc096a2e
 begin
 	using CitableBase, CitableText, CitableCorpus
@@ -23,6 +35,9 @@ md"""# Augustine, *Confessions*: token frequencies"""
 
 # ╔═╡ b590bde8-a503-450c-b190-8684ce67ec49
 md"""> See tokens occuring more than *n* times"""
+
+# ╔═╡ a74f71b9-8efe-4e96-bc2f-5899daf006dc
+round
 
 # ╔═╡ 2509c26f-7339-41b2-9d6e-4a947f314266
 html"""
@@ -74,6 +89,38 @@ md"""
 # ╔═╡ 76e98d20-3f4b-4490-a13e-96351dfaed97
 maxfreq = collect(values(counts))[1]
 
+# ╔═╡ 683a6e61-d815-4ebc-8c55-2100ec455fc6
+md"""*Find tokens occuring more than `n` times*: $(@bind n NumberField(1:maxfreq, default=20))"""
+
+# ╔═╡ 1ce19294-b37b-4eb4-98f4-4edcd8f04eb5
+overthresh = filter(collect(counts)) do (k,v)
+	v > n
+end
+
+# ╔═╡ 8fc16c01-0115-47a9-9224-3bacf7873aa4
+md"""Number of distinct forms: $(length(overthresh))"""
+
+# ╔═╡ 308d7224-578a-4e98-95bc-f211a4f0b9a0
+occurrencesoverthresh = map(overthresh) do (k,v) 
+	v
+end |> sum
+
+# ╔═╡ 37eceb62-9209-4b7d-9361-fcb994a1f3a3
+pct = 100(occurrencesoverthresh / length(lex))
+
+# ╔═╡ 607c375e-9015-411f-8206-6b5216f26c3b
+md"""Percent of text covered: $(round(pct; digits = 1))"""
+
+# ╔═╡ 9556a715-3356-4f84-a920-819017c9d8b9
+md"""
+(In a text of $(length(lex))  words, $(n) occurrences equals $(pct)%)
+"""
+
+# ╔═╡ a7a6e498-d887-4e6f-9f10-a74c0be5a43d
+join(map(collect(overthresh)) do (k,v)
+	string("1. *", k, "* (", v, " occurrences)")
+end, "\n") |> Markdown.parse
+
 # ╔═╡ 891a9826-77bf-4c6f-8cd8-4947002200d2
 nonsingletons = filter(collect(keys(counts))) do k
 	counts[k] > 1
@@ -81,11 +128,11 @@ end
 
 # ╔═╡ fdf5b40f-b6df-4aff-8cd0-a3e00838901e
 filter(counts) do (k,v)
-	k = "et"
+	k == "et"
 end
 
 # ╔═╡ 45029f7c-51d6-41ad-8822-9252efeb7993
-
+collect(values(counts)) |> 
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -808,6 +855,15 @@ version = "17.4.0+2"
 # ╟─1d2f1472-b9b9-4dad-b034-903fc1359660
 # ╟─3260d9eb-9f2d-4a82-bc64-76f07c263d12
 # ╟─b590bde8-a503-450c-b190-8684ce67ec49
+# ╟─683a6e61-d815-4ebc-8c55-2100ec455fc6
+# ╟─8fc16c01-0115-47a9-9224-3bacf7873aa4
+# ╟─607c375e-9015-411f-8206-6b5216f26c3b
+# ╠═a74f71b9-8efe-4e96-bc2f-5899daf006dc
+# ╟─9556a715-3356-4f84-a920-819017c9d8b9
+# ╠═37eceb62-9209-4b7d-9361-fcb994a1f3a3
+# ╠═308d7224-578a-4e98-95bc-f211a4f0b9a0
+# ╟─1ce19294-b37b-4eb4-98f4-4edcd8f04eb5
+# ╠═a7a6e498-d887-4e6f-9f10-a74c0be5a43d
 # ╟─2509c26f-7339-41b2-9d6e-4a947f314266
 # ╟─84d0ab7f-e583-4be6-953f-f15b502a6977
 # ╟─f95d3514-80a4-4ba5-8824-aca7e17f5434
