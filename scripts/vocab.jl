@@ -27,7 +27,7 @@ distincttokens = length(counts)
 
 using CitableParserBuilder, Tabulae
 
-tabulaeurl = "http://shot.holycross.edu/tabulae/complut-lat25-current.cex"
+tabulaeurl = "http://shot.holycross.edu/morphology/lewisshort-lat24-current.cex"
 parser = stringParser(tabulaeurl, UrlReader)
 
 
