@@ -4,6 +4,18 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    #! format: off
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+    #! format: on
+end
+
 # ╔═╡ 18998aba-8423-4267-ade0-6e3d436576cd
 begin
 	using CitableBase, CitableText, CitableCorpus
@@ -36,8 +48,14 @@ corpus = fromcex(srcfile, CitableTextCorpus, FileReader)
 # ╔═╡ 19494c32-db19-11ef-26f5-534aa91b3224
 md"""# Overview of a parseable Latin corpus"""
 
-# ╔═╡ 20d4f5ae-5828-44d0-8f11-412e5c0b8eaa
+# ╔═╡ 19f3a042-0629-4ebf-b37a-54dce7801681
+md"""## Vocabulary coverage"""
 
+# ╔═╡ 80b86e72-9451-4769-8550-246bfb88a11e
+md"""
+See top `n` terms where `n` =  
+$(@bind n Slider(5:200; show_value=true))
+"""
 
 # ╔═╡ e09b74b0-4dea-491f-91be-508cd0c0a0f5
 html"""
@@ -156,6 +174,20 @@ function lexcount(id::AbstractString, parses, occurrences) #::Vector{NamedTuple{
     [occurrences[tkn] for tkn in tknsforid] |> sum
 end
 
+# ╔═╡ f4e83bf7-11c9-4d91-be95-1bcc9a7619f6
+function tablerows(dict, n; totalcount = totallex)
+	intro = """### Coverage for $(n) most frequent words\n\n"""
+	tblhdr = "| Lexeme | Occurrences | Running total | Running percent |\n| --- | --- | --- | --- |\n"
+	runningcount = 0
+	
+	rows = map(collect(keys(dict))[1:n]) do k
+		runningcount = runningcount + dict[k]
+		pct = round((runningcount / totalcount) * 100; digits = 1)
+		string("| ", k, " | ", dict[k] , " | " , runningcount, "  |  $(pct) ", " |")
+	end
+	intro * tblhdr * join(rows, "\n")
+end
+
 # ╔═╡ 64c84760-e7dd-4316-b6fd-3fad30038cfb
 md"""## Labelling lexemes"""
 
@@ -188,6 +220,12 @@ end
 
 # ╔═╡ 5ccf4a22-16df-4a5b-9952-c88439276627
 @time lexcounts = getlexcounts(idvals, successes, counts)
+
+# ╔═╡ f92812b8-f126-467e-8b3d-52500ea8b3fd
+tablerows(lexcounts, n) |> Markdown.parse
+
+# ╔═╡ 4eda62e5-ccbb-4438-935c-dd11e7373504
+lexcounts
 
 # ╔═╡ d241d4da-6c56-45c5-ba0c-ec60228609e0
 labellemm("n1382")
@@ -975,10 +1013,12 @@ version = "17.4.0+2"
 # ╟─79b555a7-2949-4e67-9dcc-1916acb8f3d3
 # ╟─d4d47b4c-e0b7-4c47-b435-a1f040350f1d
 # ╟─7ea41ce1-03f2-4f67-945c-32131521ac61
-# ╠═11a7944e-bb8e-489f-81de-3777ad9a00d8
+# ╟─11a7944e-bb8e-489f-81de-3777ad9a00d8
 # ╟─19494c32-db19-11ef-26f5-534aa91b3224
 # ╟─53ea787c-22d2-4a48-828e-fcead6489a7d
-# ╠═20d4f5ae-5828-44d0-8f11-412e5c0b8eaa
+# ╟─19f3a042-0629-4ebf-b37a-54dce7801681
+# ╟─80b86e72-9451-4769-8550-246bfb88a11e
+# ╟─f92812b8-f126-467e-8b3d-52500ea8b3fd
 # ╟─e09b74b0-4dea-491f-91be-508cd0c0a0f5
 # ╟─cf41db9d-ea3a-4dbf-a3bb-89353656f3d7
 # ╟─1c259212-f0c8-4009-8a15-75ca2a263c73
@@ -992,16 +1032,18 @@ version = "17.4.0+2"
 # ╟─d5881f80-57de-4ebb-afda-3c1c66999782
 # ╟─e96101c8-1036-4cc2-bf76-4cea4cfceb6b
 # ╟─615a2b4c-0c6e-4060-9e60-a10f7fb7cb10
-# ╟─db804651-f05e-44a2-baad-39b2c8b14aac
+# ╠═db804651-f05e-44a2-baad-39b2c8b14aac
 # ╟─66e889e9-e37a-4b00-b70f-affe72bd9c25
 # ╟─02b9a332-bb6a-4fa5-9c05-65e40481ef24
 # ╟─24a71ec5-7d7f-4772-8037-d3f99baf1f21
 # ╟─68c9c759-2a4c-4d0f-b0e5-e2526785545e
 # ╠═d8f28071-e33d-4b71-aae6-5573bdbd1733
 # ╟─9db76391-781d-4c18-81c2-9c22dbd2b165
-# ╠═c97224ec-de9a-4745-9f9e-c075e30e093a
-# ╠═2c6ad7db-b920-45fd-a6a9-7d2ddc752ca0
+# ╟─c97224ec-de9a-4745-9f9e-c075e30e093a
+# ╟─2c6ad7db-b920-45fd-a6a9-7d2ddc752ca0
 # ╠═5ccf4a22-16df-4a5b-9952-c88439276627
+# ╟─f4e83bf7-11c9-4d91-be95-1bcc9a7619f6
+# ╠═4eda62e5-ccbb-4438-935c-dd11e7373504
 # ╟─64c84760-e7dd-4316-b6fd-3fad30038cfb
 # ╠═ffc1c966-a8d7-4963-8682-e5a5f8d826f5
 # ╠═f442061c-8bb1-4e9f-be95-dbd93d7cd9f5
