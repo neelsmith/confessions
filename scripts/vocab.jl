@@ -122,7 +122,7 @@ sort!(lexcountsall; rev=true, byvalue = true)
 
 
 dicoid = "n13803"
-lexcount(dicoid, successes, counts)
+lexcount("n13803", successes, counts)
 
 
 lexcounts = countmap(idvals) |> OrderedDict
@@ -131,8 +131,11 @@ sort!(lexcounts; rev=true, byvalue=true)
 lexlabels = Tabulae.lexlemma_dict_remote()
 function labellemm(id::AbstractString, dict = lexlabels)
     keystring = string("ls.", id)
-    if haskey(dict, (keystring))
+    key2 = string("lsx.", id)
+    if haskey(dict, keystring)
         string(id, " (", dict[keystring], ")")
+    elseif haskey(dict, key2)
+        string(id, " (", dict[key2], ")")
     else
         keystring * " (?)"
     end
