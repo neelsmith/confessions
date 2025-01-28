@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.3
+# v0.20.4
 
 using Markdown
 using InteractiveUtils
@@ -132,7 +132,7 @@ filter(counts) do (k,v)
 end
 
 # ╔═╡ 45029f7c-51d6-41ad-8822-9252efeb7993
-collect(values(counts)) |> 
+collect(values(counts)) |> sum
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -850,7 +850,7 @@ version = "17.4.0+2"
 """
 
 # ╔═╡ Cell order:
-# ╟─7e854268-c207-11ef-266f-c3dddc096a2e
+# ╠═7e854268-c207-11ef-266f-c3dddc096a2e
 # ╟─b010b992-c403-4338-9515-9713e8126874
 # ╟─1d2f1472-b9b9-4dad-b034-903fc1359660
 # ╟─3260d9eb-9f2d-4a82-bc64-76f07c263d12
@@ -867,12 +867,12 @@ version = "17.4.0+2"
 # ╟─2509c26f-7339-41b2-9d6e-4a947f314266
 # ╟─84d0ab7f-e583-4be6-953f-f15b502a6977
 # ╟─f95d3514-80a4-4ba5-8824-aca7e17f5434
-# ╟─aa6392a5-f0f8-476e-8225-4724d9bdec15
-# ╟─c8e6980f-59c4-4593-a6e6-4cda0d6e13c6
-# ╟─1401c434-97a5-43c0-adf9-5fe9b4886bf6
-# ╟─d5f2a426-da71-4f98-bbdf-e71065cfa457
+# ╠═aa6392a5-f0f8-476e-8225-4724d9bdec15
+# ╠═c8e6980f-59c4-4593-a6e6-4cda0d6e13c6
+# ╠═1401c434-97a5-43c0-adf9-5fe9b4886bf6
+# ╠═d5f2a426-da71-4f98-bbdf-e71065cfa457
 # ╟─18cbd9f1-20e3-4689-983e-9f831021129c
-# ╟─d9ab5c90-dfb7-485d-8d0f-400bebe3eecc
+# ╠═d9ab5c90-dfb7-485d-8d0f-400bebe3eecc
 # ╟─3b94433d-941f-4506-bf17-655911f9eeda
 # ╠═76e98d20-3f4b-4490-a13e-96351dfaed97
 # ╠═891a9826-77bf-4c6f-8cd8-4947002200d2

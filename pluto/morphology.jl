@@ -94,6 +94,14 @@ parses = map(vocab) do tkn
 end
 
 
+# ╔═╡ 59f24ffb-5255-4b4a-a847-1a4d29f2437c
+parses[5]
+
+# ╔═╡ 6998143c-ce38-4502-8f33-9e84ba33f113
+function lexidlist(analysislist)
+	map(a -> "", analysislist)
+end
+
 # ╔═╡ 393fc268-5a1f-4dcd-927c-787fea6b3726
 parsetoken("nunquam", parser)
 
@@ -216,7 +224,7 @@ Tabulae = "~0.15.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.2"
+julia_version = "1.11.3"
 manifest_format = "2.0"
 project_hash = "7a71fc849bc549c03a88ad45b623a7bf2385cf3d"
 
@@ -983,6 +991,8 @@ version = "17.4.0+2"
 # ╟─6641d402-d785-4b5a-b971-4d76d9151647
 # ╟─50501afe-8221-47d0-b8fe-28e8b84ee141
 # ╠═6fe8c46d-04ff-4886-afc3-a15fabdd2f2b
+# ╠═59f24ffb-5255-4b4a-a847-1a4d29f2437c
+# ╠═6998143c-ce38-4502-8f33-9e84ba33f113
 # ╠═393fc268-5a1f-4dcd-927c-787fea6b3726
 # ╠═24d55e9a-2a75-40c7-8385-72cf17ca250f
 # ╟─a735f1b8-d978-438f-bde3-fa658436f057

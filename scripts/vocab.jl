@@ -1,6 +1,7 @@
 using CitableBase, CitableText, CitableCorpus
 using Downloads, Markdown
 
+using WGLMakie
 
 localparser = true
 
