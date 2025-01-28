@@ -1,4 +1,5 @@
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 CitableBase = "d6f014bd-995c-41bd-9893-703339864534"
 CitableCorpus = "cf5ac11a-93ef-4a1a-97a3-f6af101603b5"
 CitableParserBuilder = "c834cb9d-35b9-419a-8ff8-ecaeea9e2a2a"
@@ -9,5 +10,5 @@ Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Orthography = "0b4c9448-09b0-4e78-95ea-3eb3328be36d"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-SuarezAI = "a0d154de-6333-46ee-a02c-8a7afbd530b7"
 Tabulae = "a03c184b-2b42-4641-ae65-f14a9f5424c6"
+WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
