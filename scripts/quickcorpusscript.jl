@@ -1,10 +1,10 @@
 using CitableBase, CitableText, CitableCorpus
-	using Downloads, Markdown
-	using Orthography, LatinOrthography
-	using StatsBase, OrderedCollections
-	using Tabulae, CitableParserBuilder
-	using CairoMakie
-	using Format
+using Downloads, Markdown
+using Orthography, LatinOrthography
+using StatsBase, OrderedCollections
+using Tabulae, CitableParserBuilder
+using CairoMakie
+using Format
 
 url  = "https://raw.githubusercontent.com/neelsmith/confessions/refs/heads/main/src/confessions.cex"
 corpus = fromcex(url, CitableTextCorpus, UrlReader)
@@ -103,9 +103,34 @@ end
 
 
 
+function getrawlexcounts(idlist, parselist, freqsdict )
+	lexcountsall = OrderedDict()
+	map(idlist) do lsid
+    	
+    	numoccurrences = lexcount(lsid, parselist, freqsdict) 
+    	lexcountsall[lsid] = numoccurrences
+	end
+	sort!(lexcountsall; rev=true, byvalue = true)
+end
+
+
+
+
 
 idvals = successes .|> lexids |> Iterators.flatten |> collect |> unique
 @time lexcounts = getlexcounts(idvals, successes, counts)
+@time rawlexcounts = getrawlexcounts(idvals, successes, counts)
+
+
+lexcountcex = []
+for k in keys(rawlexcounts) 
+    msg = string(k, "|", rawlexcounts[k])
+    push!(lexcountcex, msg)
+end
+open("lexemecounts.cex", "w") do io
+    write(io, join(lexcountcex, "\n"))
+end
+
 
 function tablerows(dict, n; totalcount = totallex)
 	intro = """#### Coverage for $(n) most frequent words\n\n(Links are to articles in on-line Lewis-Short *Dictionary*.)"""
@@ -211,6 +236,7 @@ summarytable = """## Augustine, *Confessions*
 
 $(tablerows(lexcounts, $(n)))
 """ 
+
 
 
 

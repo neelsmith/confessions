@@ -185,9 +185,6 @@ function lexcount(id::AbstractString, parses, occurrences) #::Vector{NamedTuple{
     [occurrences[tkn] for tkn in tknsforid] |> sum
 end
 
-# ╔═╡ 5ccf4a22-16df-4a5b-9952-c88439276627
-@time lexcounts = getlexcounts(idvals, successes, counts)
-
 # ╔═╡ f4e83bf7-11c9-4d91-be95-1bcc9a7619f6
 function tablerows(dict, n; totalcount = totallex)
 	intro = """#### Coverage for $(n) most frequent words\n\n"""
@@ -203,12 +200,6 @@ function tablerows(dict, n; totalcount = totallex)
 	end
 	intro * tblhdr * join(rows, "\n")
 end
-
-# ╔═╡ f92812b8-f126-467e-8b3d-52500ea8b3fd
-tablerows(lexcounts, n) |> Markdown.parse
-
-# ╔═╡ 4eda62e5-ccbb-4438-935c-dd11e7373504
-lexcounts
 
 # ╔═╡ d11400be-de5e-4b59-bcbd-d8619fabb3c8
 function runningtotals(orderedfreqs)
@@ -233,12 +224,6 @@ function rnngpct(runningdict; max = totallex)
 	end
 	rnngpctdict
 end
-
-# ╔═╡ f6bdc55c-e1c8-47ca-85da-9a6bfa79dafa
-runningtotaldict = runningtotals(lexcounts)
-
-# ╔═╡ e7a29424-b6ed-406f-b913-e4d73a15c4e6
-runningtotalpct = rnngpct(runningtotaldict)
 
 # ╔═╡ 64c84760-e7dd-4316-b6fd-3fad30038cfb
 md"""## Labelling lexemes"""
@@ -269,6 +254,21 @@ function getlexcounts(idlist, parselist, freqsdict )
 	end
 	sort!(lexcountsall; rev=true, byvalue = true)
 end
+
+# ╔═╡ 5ccf4a22-16df-4a5b-9952-c88439276627
+@time lexcounts = getlexcounts(idvals, successes, counts)
+
+# ╔═╡ f92812b8-f126-467e-8b3d-52500ea8b3fd
+tablerows(lexcounts, n) |> Markdown.parse
+
+# ╔═╡ 4eda62e5-ccbb-4438-935c-dd11e7373504
+lexcounts
+
+# ╔═╡ f6bdc55c-e1c8-47ca-85da-9a6bfa79dafa
+runningtotaldict = runningtotals(lexcounts)
+
+# ╔═╡ e7a29424-b6ed-406f-b913-e4d73a15c4e6
+runningtotalpct = rnngpct(runningtotaldict)
 
 # ╔═╡ d241d4da-6c56-45c5-ba0c-ec60228609e0
 labellemm("n1382")

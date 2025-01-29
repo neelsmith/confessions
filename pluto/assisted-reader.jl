@@ -25,8 +25,9 @@ begin
 	using CitableBase, CitableText, CitableCorpus
 	using Orthography, LatinOrthography
 
-	using HTTP
-	using JSON
+	using Tabulae, CitableParserBuilder
+
+	using OrderedCollections
 	
 	md"""*Unhide this cell to see Julia environment.*"""
 end
@@ -37,8 +38,23 @@ TableOfContents()
 # ╔═╡ c88402c7-0107-4eae-aadd-641ecfd87bc3
 md"""# Reading Augustine with vocabulary notes"""
 
+# ╔═╡ 18b918b6-9f78-4bfb-a48c-1f7fb9268efa
+md"""> *Glossary setting*"""
+
+# ╔═╡ 7b37ef1b-8ae6-40a8-b14b-3b07dc139894
+md"""*Gloss vocabulary apperaring fewer than `n` times*:$(@bind n Slider(200:50:750; show_value=true))"""
+
 # ╔═╡ 5f9f9b61-c854-49a8-b13b-88a1eef9725a
 md"""> *Select a passage*"""
+
+# ╔═╡ 0d471c7b-f7a5-4a42-b32e-299fcbff5eab
+md"""> *Caution*
+>
+> Failed to parse the following tokens:
+
+
+
+"""
 
 # ╔═╡ 4b5f9c3a-295b-4928-a7a7-bb4a5bbb4d3c
 html"""
@@ -112,6 +128,49 @@ vocab = map(tkn -> tkn.text, lex) |> unique |> sort
 # ╔═╡ 1b69fbfc-388e-4503-a20a-984d23fa3483
 menuvocab = filter(wd -> length(wd) > 2, vocab)
 
+# ╔═╡ 3dd7a5b4-0334-41c7-82ba-04bc7b2da8af
+md"""> ## Tokenization"""
+
+# ╔═╡ 7e618673-d934-42d5-900a-89efe9737ff9
+lextkns = filter(tokenize(textselection, latin24())) do t
+	t.tokencategory isa LexicalToken
+end
+
+# ╔═╡ dd19580e-7666-4b62-ae6b-bbe00691bdb2
+passagevocab = map(t -> t.text, lextkns) |> unique
+
+# ╔═╡ 647fa64f-cfee-4e05-9e6a-cde42d66d0d5
+md"""> ## Parser"""
+
+# ╔═╡ f3760eec-d8ab-4708-9dd4-cf28428aa8f1
+"""Load a parser."""
+function getparser(localparser::Bool = false; tabulae = "")
+    if localparser
+        parserfile = joinpath(tabulae, "scratch", "lewisshort-lat24-current.cex")
+        tabulaeStringParser(parserfile, FileReader)
+    else
+        tabulaeurl = "http://shot.holycross.edu/morphology/lewisshort-lat24-current.cex"
+        tabulaeStringParser(tabulaeurl, UrlReader)
+    end
+end
+
+# ╔═╡ a25e5eb4-c3bd-454e-8fb4-7b55830de303
+parser = getparser()
+
+# ╔═╡ 327ea7b8-6216-43a8-9e3a-7868bf63a728
+parseresults = map(s -> (token = s, parselist = parsetoken(s, parser)), passagevocab)
+
+# ╔═╡ 6d3b66f4-bf6a-4557-b2fc-c2e016ddd159
+fails = map(filter(pr -> isempty(pr.parselist), parseresults)) do pr
+	pr.token
+end |> sort
+
+# ╔═╡ dc1d9774-a2b3-4203-a557-e5d42a8d3ce4
+join(map(s -> "     $(s)", fails), "\n") |> Markdown.parse
+
+# ╔═╡ abd037fa-5bfd-49dd-a8ec-29165189c347
+
+
 # ╔═╡ da3d1c36-0aaa-4c3f-9aaa-fa497c80159c
 md"""> ## Lewis-Short"""
 
@@ -132,32 +191,88 @@ end
 # ╔═╡ 3023e951-0566-4edb-9484-87ea9ea7dbae
 ls = getls()
 
+# ╔═╡ 23a34251-85a0-4f81-b9e3-9aa3161f7670
+lexlabels = Tabulae.lexlemma_dict_remote()
+
+# ╔═╡ ba49a659-5343-40b0-98bb-4b82ceb096ae
+function article(idval, articles = ls)
+	filter(a -> endswith(a.urn, string(":", idval)), articles)[1].entry
+end
+
+# ╔═╡ b0ff77ae-695c-43f7-8a5a-5f974f540877
+"Compose labelled Markdown display for lemma ID including link to Lewis-Short."
+function label_lemm(id::AbstractString, dict = lexlabels)
+    foliobase ="http://folio2.furman.edu/lewis-short/index.html?urn=urn:cite2:hmt:ls.markdown:"
+    link = foliobase * id
+
+    keystring = string("ls.", id)
+	key2 = string("lsx.", id)
+    if haskey(dict, (keystring))
+        #string(id, " (", dict[keystring], ")")
+        string(dict[keystring], " ([",id, "](", link, "))" )
+	elseif haskey(dict, key2)
+		# string(id, " (", dict[key2], ")")
+        string(dict[key2], " ([",id, "](", link, "))" )
+    else
+        keystring * " (?)"
+        string(keystring * " ([",id, "](", link, "))" )
+    end
+end
+
+
 # ╔═╡ 1e8d226d-7efc-47b4-9680-685826f9bead
 md"""> ## Lemmatization"""
+
+# ╔═╡ d4cf82bb-285e-4736-968c-ec8549209188
+lexcounturl = "https://raw.githubusercontent.com/neelsmith/confessions/refs/heads/main/lexemecounts.cex"
+
+# ╔═╡ 0b1472b6-c61a-46f1-8883-be6901128999
+function getlexcounts(url)
+	f = Downloads.download(url)
+	countdict = OrderedDict()
+	for ln in readlines(f)
+		(k,v) = split(ln, "|")
+		count = parse(Int, v)
+		countdict[k] = count
+	end
+	rm(f)
+	sort!(countdict; rev=true, byvalue=true)
+end
+
+# ╔═╡ d688b50a-3422-49d9-9886-bb0a08505ad9
+lexcounts = getlexcounts(lexcounturl)
+
+# ╔═╡ 85d70333-8801-45ec-9a13-47e8f1b8edce
+md"""> ### Examples"""
+
+# ╔═╡ 8b28dd39-9a9b-4cbc-9f4a-61b500392ca0
+article("n16278") |> Markdown.parse
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CitableBase = "d6f014bd-995c-41bd-9893-703339864534"
 CitableCorpus = "cf5ac11a-93ef-4a1a-97a3-f6af101603b5"
+CitableParserBuilder = "c834cb9d-35b9-419a-8ff8-ecaeea9e2a2a"
 CitableText = "41e66566-473b-49d4-85b7-da83b66615d8"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
-HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LatinOrthography = "1e3032c9-fa1e-4efb-a2df-a06f238f6146"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Orthography = "0b4c9448-09b0-4e78-95ea-3eb3328be36d"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Tabulae = "a03c184b-2b42-4641-ae65-f14a9f5424c6"
 
 [compat]
 CitableBase = "~10.4.0"
 CitableCorpus = "~0.13.5"
+CitableParserBuilder = "~0.30.1"
 CitableText = "~0.16.2"
-HTTP = "~1.10.15"
-JSON = "~0.21.4"
 LatinOrthography = "~0.7.3"
+OrderedCollections = "~1.7.0"
 Orthography = "~0.22.0"
 PlutoUI = "~0.7.60"
+Tabulae = "~0.15.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -166,7 +281,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "9444e7397cc18ad11d9e2c8423882b7fdcad5214"
+project_hash = "9297571b3f981cbb0d64120672597768c9f727d3"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -237,6 +352,18 @@ git-tree-sha1 = "f400484e7b0fc1707f9dfd288fa297a4a2d9a2ad"
 uuid = "cf5ac11a-93ef-4a1a-97a3-f6af101603b5"
 version = "0.13.5"
 
+[[deps.CitableObject]]
+deps = ["CitableBase", "CiteEXchange", "DocStringExtensions", "Documenter", "Downloads", "Test", "TestSetExtensions"]
+git-tree-sha1 = "86eb34cc98bc2c5b73dc96da5fe116adba903d56"
+uuid = "e2b2f5ea-1cd8-4ce8-9b2b-05dad64c2a57"
+version = "0.16.1"
+
+[[deps.CitableParserBuilder]]
+deps = ["CSV", "CitableBase", "CitableCorpus", "CitableObject", "CitableText", "Compat", "DataFrames", "Dictionaries", "DocStringExtensions", "Documenter", "Downloads", "OrderedCollections", "Orthography", "StatsBase", "Test", "TestSetExtensions", "TypedTables"]
+git-tree-sha1 = "57ddf6f5aa12c616d993f3c50236bfb8d531d687"
+uuid = "c834cb9d-35b9-419a-8ff8-ecaeea9e2a2a"
+version = "0.30.1"
+
 [[deps.CitableText]]
 deps = ["CitableBase", "DocStringExtensions", "Documenter", "Test", "TestSetExtensions"]
 git-tree-sha1 = "00ddf4c75f3e2b8dd54a4e4808b8ec27053d9bb3"
@@ -282,10 +409,21 @@ git-tree-sha1 = "f36e5e8fdffcb5646ea5da81495a5a7566005127"
 uuid = "f0e56b4a-5159-44fe-b623-3e5288b988bb"
 version = "2.4.3"
 
+[[deps.Crayons]]
+git-tree-sha1 = "249fe38abf76d48563e2f4556bebd215aa317e15"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "4.1.1"
+
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 version = "1.16.0"
+
+[[deps.DataFrames]]
+deps = ["Compat", "DataAPI", "DataStructures", "Future", "InlineStrings", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrecompileTools", "PrettyTables", "Printf", "Random", "Reexport", "SentinelArrays", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "fb61b4812c49343d7ef0b533ba982c46021938a6"
+uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+version = "1.7.0"
 
 [[deps.DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -310,9 +448,9 @@ version = "1.2.0"
 
 [[deps.Dictionaries]]
 deps = ["Indexing", "Random", "Serialization"]
-git-tree-sha1 = "61ab242274c0d44412d8eab38942a49aa46de9d0"
+git-tree-sha1 = "1f3b7b0d321641c1f2e519f7aed77f8e1f6cb133"
 uuid = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
-version = "0.4.3"
+version = "0.3.29"
 
 [[deps.Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -346,7 +484,7 @@ version = "0.1.11"
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "e51db81749b0777b2147fbe7b783ee79045b8e99"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.6.4+1"
+version = "2.6.4+3"
 
 [[deps.FilePathsBase]]
 deps = ["Compat", "Dates"]
@@ -385,6 +523,11 @@ deps = ["Artifacts", "Expat_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Libico
 git-tree-sha1 = "399f4a308c804b446ae4c91eeafadb2fe2c54ff9"
 uuid = "f8c6e375-362e-5223-8a59-34ff63f689eb"
 version = "2.47.1+0"
+
+[[deps.Glob]]
+git-tree-sha1 = "97285bbd5230dd766e9ef6749b80fc617126d496"
+uuid = "c27321d9-0574-5035-807b-f59d2c89b15c"
+version = "1.3.1"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "PrecompileTools", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
@@ -433,6 +576,11 @@ deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
+[[deps.InvertedIndices]]
+git-tree-sha1 = "6da3c4316095de0f5ee2ebd875df8721e7e0bdbe"
+uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
+version = "1.3.1"
+
 [[deps.IrrationalConstants]]
 git-tree-sha1 = "630b497eafcc20001bba38a4651b327dcfc491d2"
 uuid = "92d709cd-6900-40b7-9082-c6be49f344b6"
@@ -445,15 +593,20 @@ version = "1.0.0"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
-git-tree-sha1 = "be3dc50a92e5a386872a493a10050136d4703f9b"
+git-tree-sha1 = "a007feb38b422fbdab534406aeca1b86823cb4d6"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.6.1"
+version = "1.7.0"
 
 [[deps.JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
 git-tree-sha1 = "31e996f0a15c7b280ba9f76636b3ff9e2ae58c9a"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.4"
+
+[[deps.LaTeXStrings]]
+git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
+uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+version = "1.4.0"
 
 [[deps.LatinOrthography]]
 deps = ["CitableBase", "CitableCorpus", "CitableText", "DocStringExtensions", "Documenter", "Orthography", "Test"]
@@ -497,9 +650,9 @@ version = "1.11.0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "61dfdba58e585066d8bce214c5a51eaa0539f269"
+git-tree-sha1 = "be484f5c92fad0bd8acfef35fe017900b0b73809"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.17.0+1"
+version = "1.18.0+0"
 
 [[deps.LinearAlgebra]]
 deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
@@ -592,7 +745,7 @@ version = "1.4.3"
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "7493f61f55a6cce7325f197443aa80d32554ba10"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.0.15+1"
+version = "3.0.15+3"
 
 [[deps.OrderedCollections]]
 git-tree-sha1 = "12f1439c4f986bb868acda6ea33ebc78e19b95ad"
@@ -649,15 +802,21 @@ git-tree-sha1 = "9306f6085165d270f7e3db02af26a400d580f5c6"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
 version = "1.4.3"
 
+[[deps.PrettyTables]]
+deps = ["Crayons", "LaTeXStrings", "Markdown", "PrecompileTools", "Printf", "Reexport", "StringManipulation", "Tables"]
+git-tree-sha1 = "1101cd475833706e4d0e7b122218257178f48f34"
+uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+version = "2.4.0"
+
 [[deps.Printf]]
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 version = "1.11.0"
 
 [[deps.PtrArrays]]
-git-tree-sha1 = "77a42d78b6a92df47ab37e177b2deac405e1c88f"
+git-tree-sha1 = "1d36ef11a9aaf1e8b74dacc6a731dd1de8fd493d"
 uuid = "43287f4e-b6f4-7ad1-bb20-aadabca52c3d"
-version = "1.2.1"
+version = "1.3.0"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "StyledStrings", "Unicode"]
@@ -748,6 +907,12 @@ git-tree-sha1 = "29321314c920c26684834965ec2ce0dacc9cf8e5"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.34.4"
 
+[[deps.StringManipulation]]
+deps = ["PrecompileTools"]
+git-tree-sha1 = "a6b1675a536c5ad1a60e5a5153e1fee12eb146e3"
+uuid = "892a3eda-7b42-436c-8928-eab12a02cf0e"
+version = "0.4.0"
+
 [[deps.StyledStrings]]
 uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 version = "1.11.0"
@@ -774,6 +939,12 @@ git-tree-sha1 = "598cd7c1f68d1e205689b1c2fe65a9f85846f297"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 version = "1.12.0"
 
+[[deps.Tabulae]]
+deps = ["CitableBase", "CitableCorpus", "CitableObject", "CitableParserBuilder", "CitableText", "Compat", "DocStringExtensions", "Documenter", "Downloads", "Glob", "LatinOrthography", "Markdown", "Orthography", "Test", "TestSetExtensions", "Unicode"]
+git-tree-sha1 = "9152065e6dfa3b57776ed6622b7bfbcc1f122ef8"
+uuid = "a03c184b-2b42-4641-ae65-f14a9f5424c6"
+version = "0.15.1"
+
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
@@ -796,9 +967,9 @@ uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.11.3"
 
 [[deps.Tricks]]
-git-tree-sha1 = "7822b97e99a1672bfb1b49b668a6d46d58d8cbcb"
+git-tree-sha1 = "6cae795a5a9313bbb4f60683f7263318fc7d1505"
 uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
-version = "0.1.9"
+version = "0.1.10"
 
 [[deps.TypedTables]]
 deps = ["Adapt", "Dictionaries", "Indexing", "SplitApplyCombine", "Tables", "Unicode"]
@@ -856,11 +1027,15 @@ version = "17.4.0+2"
 # ╟─803177aa-c237-11ef-2051-e7ccae208332
 # ╟─79709993-78ca-434f-aac5-b60964c2d648
 # ╟─c88402c7-0107-4eae-aadd-641ecfd87bc3
+# ╟─18b918b6-9f78-4bfb-a48c-1f7fb9268efa
+# ╟─7b37ef1b-8ae6-40a8-b14b-3b07dc139894
 # ╟─5f9f9b61-c854-49a8-b13b-88a1eef9725a
 # ╟─4dfbc4ca-e111-4719-926e-c3040a2f387d
 # ╟─a4a19274-e7f4-4f45-bdc0-1e7a27f7d6c9
 # ╟─0497d9b1-aae5-4435-afd1-1d5e85a1d400
 # ╟─46c23333-41e1-48b2-8945-bcf959f211a8
+# ╟─0d471c7b-f7a5-4a42-b32e-299fcbff5eab
+# ╟─dc1d9774-a2b3-4203-a557-e5d42a8d3ce4
 # ╟─4b5f9c3a-295b-4928-a7a7-bb4a5bbb4d3c
 # ╟─c1ed51dd-0ea4-467d-8cce-b0844b4d0e7d
 # ╟─00c954fe-032a-4f41-ae1c-0b5e1eefe861
@@ -877,9 +1052,26 @@ version = "17.4.0+2"
 # ╟─942e9b6d-ce3a-4470-9d05-801cdfe64a30
 # ╟─2ac3e2e3-85ca-44a1-849a-668fde60f7d8
 # ╟─9a48acd0-5323-4a75-bfba-70b61be609c9
+# ╟─3dd7a5b4-0334-41c7-82ba-04bc7b2da8af
+# ╟─7e618673-d934-42d5-900a-89efe9737ff9
+# ╠═dd19580e-7666-4b62-ae6b-bbe00691bdb2
+# ╟─647fa64f-cfee-4e05-9e6a-cde42d66d0d5
+# ╟─f3760eec-d8ab-4708-9dd4-cf28428aa8f1
+# ╟─a25e5eb4-c3bd-454e-8fb4-7b55830de303
+# ╠═327ea7b8-6216-43a8-9e3a-7868bf63a728
+# ╠═6d3b66f4-bf6a-4557-b2fc-c2e016ddd159
+# ╠═abd037fa-5bfd-49dd-a8ec-29165189c347
 # ╟─da3d1c36-0aaa-4c3f-9aaa-fa497c80159c
 # ╟─23e6c8ea-296d-41d5-bef6-a3465405f2cf
-# ╠═3023e951-0566-4edb-9484-87ea9ea7dbae
+# ╟─3023e951-0566-4edb-9484-87ea9ea7dbae
+# ╟─23a34251-85a0-4f81-b9e3-9aa3161f7670
+# ╠═ba49a659-5343-40b0-98bb-4b82ceb096ae
+# ╟─b0ff77ae-695c-43f7-8a5a-5f974f540877
 # ╟─1e8d226d-7efc-47b4-9680-685826f9bead
+# ╟─d4cf82bb-285e-4736-968c-ec8549209188
+# ╟─0b1472b6-c61a-46f1-8883-be6901128999
+# ╟─d688b50a-3422-49d9-9886-bb0a08505ad9
+# ╟─85d70333-8801-45ec-9a13-47e8f1b8edce
+# ╠═8b28dd39-9a9b-4cbc-9f4a-61b500392ca0
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
