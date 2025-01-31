@@ -39,15 +39,39 @@ function getparser(localparser::Bool = localparser; tabulae = tabulaerepo)
     end
 end
 
-parser = getparser()
+wordlist = collect(keys(counts))
+testlist = wordlist[1:500]
 
-parsetoken("et", parser)
+parser = getparser(true)
+
+parsetoken("mecum", parser)
+
+fails = []
+for (i, wd) in enumerate(testlist)
+    if mod(i, 25) == 0
+        @info("$(i)/$(length(testlist))")
+    end
+    reslts = parsetoken(wd, parser)
+    if isempty(reslts)
+        @warn("Failed to parse $(wd)")
+        push!(fails, wd)
+    end
+end
+
+open("fails.txt", "w") do io
+    write(io, join(fails,"\n"))
+end
+
 
 nonsingletons = filter(counts) do (k,v)
     v > 1
 end
 repeatvocab = keys(nonsingletons) |> collect
 @info("Number of repeated tokens: $(length(repeatvocab))")
+
+
+
+
 
 
 
