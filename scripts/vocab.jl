@@ -63,7 +63,7 @@ end
 
 
 failsfreqs = map(fails) do s
-    string(s, " ", counts[s])
+    string(s, "|", counts[s])
 end
 open("fails.cex", "w") do io
     write(io, join(failsfreqs,"\n"))
