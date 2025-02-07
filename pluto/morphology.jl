@@ -83,7 +83,7 @@ vocab = collect(keys(counts) )
 md"""## Morphology"""
 
 # ╔═╡ 6641d402-d785-4b5a-b971-4d76d9151647
-parserurl = "http://shot.holycross.edu/morphology/lewisshort-lat24-current.cex"
+parserurl = "http://shot.holycross.edu/morphology/confessions-current.cex"
 
 # ╔═╡ 50501afe-8221-47d0-b8fe-28e8b84ee141
 parser = tabulaeStringParser(parserurl, UrlReader)
@@ -113,12 +113,15 @@ end
 # ╔═╡ a735f1b8-d978-438f-bde3-fa658436f057
 nogo = filter(p -> p.parses |> isempty, parses)
 
+# ╔═╡ 26639249-e21e-48d5-85b1-05a8ba33053c
+
+
 # ╔═╡ f15205a6-0c69-4ddd-aa16-03205a5ccaef
 length(nogo)
 
 # ╔═╡ 25aca448-0cc3-4818-b116-7b15b5a43e1e
 topbad = map(nogo[1:n]) do failure
-	string("- ", failure.token, " (", counts[failure.token], ")")
+	string("1. ", failure.token, " (", counts[failure.token], ")")
 end
 
 # ╔═╡ 575e371f-b0cc-4af8-bd66-01343fb33b90
@@ -139,10 +142,12 @@ end |> sum
 md"""Summary of parsing:
 
 
-- Unique forms parsed:  **$(length(good))**
-- Words in corpus: **$(goodtokens)**
-- Percent of text parsed: **$(round(goodtokens / length(tkns) * 100; digits = 2))**
 
+- Words parsed : **$(goodtokens)**
+- Percent of text parsed: **$(round(goodtokens / length(tkns) * 100; digits = 2))**
+- Unique forms parsed:  **$(length(good))**
+- Unanalyzed forms: **$(length(nogo))**
+- Percent of unique forms parsed: **$(round(length(good) / length(counts) * 100))**
 """
 
 # ╔═╡ 71be2032-fc9c-4656-a238-d9ae323dea94
@@ -973,7 +978,7 @@ version = "17.4.0+2"
 # ╟─60850b99-1305-408e-9318-94da66ab1f16
 # ╟─afaafe3e-d826-11ef-1fb4-f59f9502ec1f
 # ╟─8f94ead3-7f73-4547-be55-97a9b76e6aa3
-# ╟─69d6a18d-9e8c-49f5-b15f-0cbfd9f2a884
+# ╠═69d6a18d-9e8c-49f5-b15f-0cbfd9f2a884
 # ╟─8e1425b0-b4ff-440a-a690-300c703d336a
 # ╟─b6b58afa-1f60-4eeb-8e0b-f19ec4b7cc25
 # ╟─dceec491-82c3-4f4b-b3bb-adf90310322c
@@ -989,16 +994,17 @@ version = "17.4.0+2"
 # ╟─83c6fc81-664e-42ae-a127-8cba1f547676
 # ╟─8b06e502-7fba-4264-96e2-7d8113b77f9e
 # ╟─6641d402-d785-4b5a-b971-4d76d9151647
-# ╟─50501afe-8221-47d0-b8fe-28e8b84ee141
+# ╠═50501afe-8221-47d0-b8fe-28e8b84ee141
 # ╠═6fe8c46d-04ff-4886-afc3-a15fabdd2f2b
 # ╠═59f24ffb-5255-4b4a-a847-1a4d29f2437c
 # ╠═6998143c-ce38-4502-8f33-9e84ba33f113
 # ╠═393fc268-5a1f-4dcd-927c-787fea6b3726
 # ╠═24d55e9a-2a75-40c7-8385-72cf17ca250f
 # ╟─a735f1b8-d978-438f-bde3-fa658436f057
-# ╟─f15205a6-0c69-4ddd-aa16-03205a5ccaef
+# ╠═26639249-e21e-48d5-85b1-05a8ba33053c
+# ╠═f15205a6-0c69-4ddd-aa16-03205a5ccaef
 # ╠═25aca448-0cc3-4818-b116-7b15b5a43e1e
-# ╟─73dbbccd-41aa-4052-a606-ddcfaad36250
+# ╠═73dbbccd-41aa-4052-a606-ddcfaad36250
 # ╟─299ffedb-1552-4c74-a495-33fffee65670
 # ╟─155c7b4a-1c23-4253-ac79-e94f23e6c414
 # ╠═71be2032-fc9c-4656-a238-d9ae323dea94

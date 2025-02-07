@@ -1,8 +1,6 @@
 using CitableBase, CitableText, CitableCorpus
 using Downloads, Markdown
 
-using WGLMakie
-
 localparser = true
 
 srcfile = joinpath(pwd(), "src", "confessions.cex")
@@ -28,38 +26,47 @@ distincttokens = length(counts)
 using CitableParserBuilder, Tabulae
 
 tabulaerepo = joinpath(dirname(pwd()), "Tabulae.jl")
+isdir(tabulaerepo)
+
 
 function getparser(localparser::Bool = localparser; tabulae = tabulaerepo)
     if localparser
-        parserfile = joinpath(tabulae, "scratch", "lewisshort-lat24-current.cex")
+        parserfile = joinpath(tabulae, "scratch", "confessions-current.cex")
         stringParser(parserfile, FileReader)
     else
-        tabulaeurl = "http://shot.holycross.edu/morphology/lewisshort-lat24-current.cex"
+        tabulaeurl = "http://shot.holycross.edu/morphology/confessions-current.cex"
         stringParser(tabulaeurl, UrlReader)
     end
 end
 
 wordlist = collect(keys(counts))
-testlist = wordlist[1:500]
+testlist = wordlist[1:5000]
 
 parser = getparser(true)
 
-parsetoken("mecum", parser)
+
+parser |> typeof
+
+parsetoken("alypius", parser)
 
 fails = []
 for (i, wd) in enumerate(testlist)
     if mod(i, 25) == 0
         @info("$(i)/$(length(testlist))")
     end
-    reslts = parsetoken(wd, parser)
+    reslts = parsetoken(lowercase(wd), parser)
     if isempty(reslts)
         @warn("Failed to parse $(wd)")
         push!(fails, wd)
     end
 end
 
+
+failsfreqs = map(fails) do s
+    string(s, " ", counts[s])
+end
 open("fails.txt", "w") do io
-    write(io, join(fails,"\n"))
+    write(io, join(failsfreqs,"\n"))
 end
 
 
@@ -70,7 +77,9 @@ repeatvocab = keys(nonsingletons) |> collect
 @info("Number of repeated tokens: $(length(repeatvocab))")
 
 
+vocab = collect(keys(counts))
 
+filter(w -> startswith(w, "Ies"), vocab)
 
 
 

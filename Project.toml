@@ -13,3 +13,6 @@ Orthography = "0b4c9448-09b0-4e78-95ea-3eb3328be36d"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Tabulae = "a03c184b-2b42-4641-ae65-f14a9f5424c6"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
+
+[compat]
+Tabulae = "0.16.1"
