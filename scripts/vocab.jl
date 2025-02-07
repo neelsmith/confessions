@@ -47,7 +47,7 @@ parser = getparser(true)
 
 parser |> typeof
 
-parsetoken("alypius", parser)
+parsetoken("audivi", parser)
 
 fails = []
 for (i, wd) in enumerate(testlist)
