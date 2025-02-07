@@ -65,7 +65,7 @@ end
 failsfreqs = map(fails) do s
     string(s, " ", counts[s])
 end
-open("fails.txt", "w") do io
+open("fails.cex", "w") do io
     write(io, join(failsfreqs,"\n"))
 end
 
