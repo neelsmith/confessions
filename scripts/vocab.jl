@@ -39,35 +39,49 @@ function getparser(localparser::Bool = localparser; tabulae = tabulaerepo)
     end
 end
 
+
+
+function collectfails(p, words)
+    fails = []
+    for (i, wd) in enumerate(words)
+        if mod(i, 25) == 0
+            @info("$(i)/$(length(words))")
+        end
+        reslts = parsetoken(lowercase(wd), parser)
+        if isempty(reslts)
+            @warn("Failed to parse $(wd)")
+            push!(fails, wd)
+        end
+    end
+    fails
+end
+
+
+function writefailcounts(badlist, countdict)
+    failsfreqs = map(badlist) do s
+        string(s, " ", countdict[s])
+    end
+    open("fails.txt", "w") do io
+        write(io, join(failsfreqs,"\n"))
+    end
+end
+
+
+
+
 wordlist = collect(keys(counts))
 testlist = wordlist[1:5000]
 
 parser = getparser(true)
 
+parsetoken("codex", parser)
 
-parser |> typeof
-
-parsetoken("audivi", parser)
-
-fails = []
-for (i, wd) in enumerate(testlist)
-    if mod(i, 25) == 0
-        @info("$(i)/$(length(testlist))")
-    end
-    reslts = parsetoken(lowercase(wd), parser)
-    if isempty(reslts)
-        @warn("Failed to parse $(wd)")
-        push!(fails, wd)
-    end
-end
+@time fails = collectfails(parser, testlist)
+writefailcounts(fails, counts)
 
 
-failsfreqs = map(fails) do s
-    string(s, " ", counts[s])
-end
-open("fails.txt", "w") do io
-    write(io, join(failsfreqs,"\n"))
-end
+
+
 
 
 nonsingletons = filter(counts) do (k,v)
