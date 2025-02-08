@@ -73,8 +73,7 @@ wordlist = collect(keys(counts))
 testlist = wordlist[1:5000]
 
 parser = getparser(true)
-
-parsetoken("codex", parser)
+#parsetoken("codex", parser)
 
 @time fails = collectfails(parser, testlist)
 writefailcounts(fails, counts)
