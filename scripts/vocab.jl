@@ -61,7 +61,7 @@ function writefailcounts(badlist, countdict)
     failsfreqs = map(badlist) do s
         string(s, " ", countdict[s])
     end
-    open("fails.txt", "w") do io
+    open("fails.cex", "w") do io
         write(io, join(failsfreqs,"\n"))
     end
 end
