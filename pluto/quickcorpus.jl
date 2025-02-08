@@ -120,10 +120,10 @@ md"""## Parser"""
 """Load a parser."""
 function getparser(localparser::Bool = false; tabulae = "")
     if localparser
-        parserfile = joinpath(tabulae, "scratch", "lewisshort-lat24-current.cex")
+        parserfile = joinpath(tabulae, "scratch", "confessions-current.cex")
         tabulaeStringParser(parserfile, FileReader)
     else
-        tabulaeurl = "http://shot.holycross.edu/morphology/lewisshort-lat24-current.cex"
+        tabulaeurl = "http://shot.holycross.edu/morphology/confessions-current.cex"
         tabulaeStringParser(tabulaeurl, UrlReader)
     end
 end
@@ -132,6 +132,9 @@ end
 
 # ╔═╡ db804651-f05e-44a2-baad-39b2c8b14aac
 parser = getparser()
+
+# ╔═╡ 681db875-0f85-448d-9b95-acdcbb7178db
+parsetoken("cupio", parser) .|> latinForm
 
 # ╔═╡ 66e889e9-e37a-4b00-b70f-affe72bd9c25
 parses = map(repeatvocab) do wrd
@@ -2188,6 +2191,7 @@ version = "3.6.0+0"
 # ╟─d5881f80-57de-4ebb-afda-3c1c66999782
 # ╟─e96101c8-1036-4cc2-bf76-4cea4cfceb6b
 # ╟─615a2b4c-0c6e-4060-9e60-a10f7fb7cb10
+# ╠═681db875-0f85-448d-9b95-acdcbb7178db
 # ╠═db804651-f05e-44a2-baad-39b2c8b14aac
 # ╟─66e889e9-e37a-4b00-b70f-affe72bd9c25
 # ╟─02b9a332-bb6a-4fa5-9c05-65e40481ef24
