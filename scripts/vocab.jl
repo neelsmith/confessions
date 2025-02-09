@@ -57,11 +57,11 @@ function collectfails(p, words)
 end
 
 
-function writefailcounts(badlist, countdict)
+function writefailcounts(badlist, countdict; fname = "fails.cex")
     failsfreqs = map(badlist) do s
         string(s, "|", countdict[s])
     end
-    open("fails.cex", "w") do io
+    open(fname, "w") do io
         write(io, join(failsfreqs,"\n"))
     end
 end
@@ -78,8 +78,8 @@ parser = getparser(true)
 @time fails = collectfails(parser, testlist)
 writefailcounts(fails, counts)
 
-
-
+@time allfails = collectfails(parser, wordlist)
+writefailcounts(allfails, counts; fname = "fails-all.cex")
 
 
 
