@@ -978,7 +978,7 @@ version = "17.4.0+2"
 # ╟─60850b99-1305-408e-9318-94da66ab1f16
 # ╟─afaafe3e-d826-11ef-1fb4-f59f9502ec1f
 # ╟─8f94ead3-7f73-4547-be55-97a9b76e6aa3
-# ╠═69d6a18d-9e8c-49f5-b15f-0cbfd9f2a884
+# ╟─69d6a18d-9e8c-49f5-b15f-0cbfd9f2a884
 # ╟─8e1425b0-b4ff-440a-a690-300c703d336a
 # ╟─b6b58afa-1f60-4eeb-8e0b-f19ec4b7cc25
 # ╟─dceec491-82c3-4f4b-b3bb-adf90310322c
