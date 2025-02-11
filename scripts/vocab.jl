@@ -72,7 +72,7 @@ end
 wordlist = collect(keys(counts))
 testlist = wordlist[1:5000]
 
-parser = getparser(true)
+@time parser = getparser(true)
 #parsetoken("codex", parser)
 
 @time fails = collectfails(parser, testlist)
