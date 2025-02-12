@@ -70,12 +70,12 @@ end
 
 
 wordlist = collect(keys(counts))
-testlist = wordlist[1:5000]
+testlist = wordlist[1:5743] # repeated tokens
 
 @time parser = getparser(true)
 #parsetoken("codex", parser)
 
-@time fails = collectfails(parser, testlist[200:250]; verbose = true)
+@time fails = collectfails(parser, testlist; verbose = false)
 writefailcounts(fails, counts)
 
 open("testlist.txt", "w") do io
@@ -86,49 +86,6 @@ parser |> typeof
 @time allfails = collectfails(parser, wordlist)
 writefailcounts(allfails, counts; fname = "fails-all.cex")
 
-#=
-function localparse(s::AbstractString, parser::TabulaeStringParser; verbose = false)
-    ptrn = lowercase(s) * delimiter(parser)
-    verbose ? @warn("Looking for $(s) in parser data") :     @debug("Looking for $(s) in parser data")
-    matches = filter(ln -> startswith(ln, ptrn), datasource(parser))
-    @debug("Got $(matches)")
-    
-    if isempty(matches)
-        # Try again for enclitics if result is empty!    
-        results = Analysis[]
-        endings = orthography(parser) isa Latin23 ? map(enc -> replace(enc, "v" => "u"), enclitics) : enclitics
-        for e in endings
-            vebose ? @warn("Check for enclitic $(e) in string $(s)") :        @info("Check for enclitic $(e) in string $(s)")
-            if endswith(s,e) && ! isequal(s,e)
-                verbose ? @warn("Found  possible  enclitic") :    @debug("Found  possible  enclitic")
-                
-                rng = findlast(e, s)
-                lastch = rng[1] - 1
-                mtkn = s[1:lastch]
-                otkn = s
-                verbose ? @warn("Tokens: $(tkn) + $(e)") : @debug("Tokens: $(tkn) + $(e)")
-                for prs in parsetoken(mtkn, parser)
-                    push!(results, analysisforencliticseq(prs, s, "A"))
-                end
-
-                for prs in parsetoken(e, parser)
-                    push!(results, analysisforencliticseq(prs, s, "B"))
-                end
-                  
-            end
-        end
-        results
-        
-    else
-        @debug("Found results $(matches)")
-        map(ln -> fromcex(ln, Analysis), matches)
-    end
-    
-end
-=#
-
-localparse("mecum", parser; verbose = true)
-
 
 nonsingletons = filter(counts) do (k,v)
     v > 1
@@ -137,12 +94,39 @@ repeatvocab = keys(nonsingletons) |> collect
 @info("Number of repeated tokens: $(length(repeatvocab))")
 
 
-vocab = collect(keys(counts))
 
-filter(w -> startswith(w, "Ies"), vocab)
+repeattotal = 0
+for w in repeatvocab
+    repeattotal = repeattotal + counts[w]
+end
+repeattotal
+
+failtotal = 0
+for w in fails
+    failtotal = failtotal + counts[w]
+end
+failtotal
+
+pctfailed = failtotal / repeattotal
 
 
+singletons = filter(counts) do (k,v)
+    v == 1
+end
 
+
+singlefails = collectfails(parse, collect(keys(singletons)))
+
+singletotal = length(singletons)
+singlefailcount = 0
+for w in singlefails
+    singlefailcount = singlefailcount + counts[w]
+end
+singlefailcount
+
+pctsinglefailed = singlefailcount / singletotal
+
+####
 
 @time parses = map(repeatvocab) do wrd
     (token = wrd, parselist = parsetoken(wrd, parser))
