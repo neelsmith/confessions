@@ -78,11 +78,15 @@ testlist = wordlist[1:5000]
 @time fails = collectfails(parser, testlist[200:250]; verbose = true)
 writefailcounts(fails, counts)
 
+open("testlist.txt", "w") do io
+    write(io, join(testlist[200:250], "\n"))
+end
+
 parser |> typeof
 @time allfails = collectfails(parser, wordlist)
 writefailcounts(allfails, counts; fname = "fails-all.cex")
 
-
+#=
 function localparse(s::AbstractString, parser::TabulaeStringParser; verbose = false)
     ptrn = lowercase(s) * delimiter(parser)
     verbose ? @warn("Looking for $(s) in parser data") :     @debug("Looking for $(s) in parser data")
@@ -121,7 +125,7 @@ function localparse(s::AbstractString, parser::TabulaeStringParser; verbose = fa
     end
     
 end
-
+=#
 
 localparse("mecum", parser; verbose = true)
 
