@@ -29,10 +29,10 @@ tabulaerepo = joinpath(dirname(pwd()), "Tabulae.jl")
 isdir(tabulaerepo)
 
 
-function getparser(localparser::Bool = localparser; tabulae = tabulaerepo)
+function getparser(localparser::Bool = localparser; tabulae = tabulaerepo)::TabulaeStringParser
     if localparser
         parserfile = joinpath(tabulae, "scratch", "confessions-current.cex")
-        stringParser(parserfile, FileReader)
+        tabulaeStringParser(parserfile, FileReader)
     else
         tabulaeurl = "http://shot.holycross.edu/morphology/confessions-current.cex"
         stringParser(tabulaeurl, UrlReader)
@@ -41,13 +41,13 @@ end
 
 
 
-function collectfails(p, words)
+function collectfails(p, words; verbose = true)
     fails = []
     for (i, wd) in enumerate(words)
         if mod(i, 25) == 0
             @info("$(i)/$(length(words))")
         end
-        reslts = parsetoken(lowercase(wd), parser)
+        reslts = parsetoken(lowercase(wd), parser; verbose = verbose)
         if isempty(reslts)
             @warn("Failed to parse $(wd)")
             push!(fails, wd)
@@ -75,12 +75,55 @@ testlist = wordlist[1:5000]
 @time parser = getparser(true)
 #parsetoken("codex", parser)
 
-@time fails = collectfails(parser, testlist)
+@time fails = collectfails(parser, testlist[200:250]; verbose = true)
 writefailcounts(fails, counts)
 
+parser |> typeof
 @time allfails = collectfails(parser, wordlist)
 writefailcounts(allfails, counts; fname = "fails-all.cex")
 
+
+function localparse(s::AbstractString, parser::TabulaeStringParser; verbose = false)
+    ptrn = lowercase(s) * delimiter(parser)
+    verbose ? @warn("Looking for $(s) in parser data") :     @debug("Looking for $(s) in parser data")
+    matches = filter(ln -> startswith(ln, ptrn), datasource(parser))
+    @debug("Got $(matches)")
+    
+    if isempty(matches)
+        # Try again for enclitics if result is empty!    
+        results = Analysis[]
+        endings = orthography(parser) isa Latin23 ? map(enc -> replace(enc, "v" => "u"), enclitics) : enclitics
+        for e in endings
+            vebose ? @warn("Check for enclitic $(e) in string $(s)") :        @info("Check for enclitic $(e) in string $(s)")
+            if endswith(s,e) && ! isequal(s,e)
+                verbose ? @warn("Found  possible  enclitic") :    @debug("Found  possible  enclitic")
+                
+                rng = findlast(e, s)
+                lastch = rng[1] - 1
+                mtkn = s[1:lastch]
+                otkn = s
+                verbose ? @warn("Tokens: $(tkn) + $(e)") : @debug("Tokens: $(tkn) + $(e)")
+                for prs in parsetoken(mtkn, parser)
+                    push!(results, analysisforencliticseq(prs, s, "A"))
+                end
+
+                for prs in parsetoken(e, parser)
+                    push!(results, analysisforencliticseq(prs, s, "B"))
+                end
+                  
+            end
+        end
+        results
+        
+    else
+        @debug("Found results $(matches)")
+        map(ln -> fromcex(ln, Analysis), matches)
+    end
+    
+end
+
+
+localparse("mecum", parser; verbose = true)
 
 
 nonsingletons = filter(counts) do (k,v)
